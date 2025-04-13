@@ -1,19 +1,35 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
+import foundation1 from '../../assets/foundation1.jpeg'
+import foundation2 from '../../assets/foundation2.jpeg'
+import foundation3 from '../../assets/foundation3.jpeg'
+import foundation4 from '../../assets/foundation4.jpeg'
+import { useEffect, useState } from "react";
+
+const images =[foundation1, foundation2,foundation3, foundation4]
 
 export default function Hero() {
+  const[currentImage, setCurrentImage] = useState(0)
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImage((previousIndex) => (previousIndex + 1) % images.length)
+    }, 5000)
+    return () => clearInterval(interval)
+  },[])
+
   return (
     // Hero section with background image and gradient overlay
     <div 
       className="relative py-32 bg-gradient-to-b from-primary/10 to-background"
       style={{
-        backgroundImage: `url(${getImage("calming")})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
+        backgroundImage: `url(${images[currentImage]})`,
+        backgroundSize: 'contain',
+        backgroundPosition: 'top center',
       }}
     >
       {/* Semi-transparent overlay for better text readability */}
-      <div className="absolute inset-0 bg-background/80" />
+      <div className="absolute inset-0 bg-background/60" />
 
       {/* Content container */}
       <div className="container px-4 relative">

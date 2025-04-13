@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { type HealthContent, insertHealthContentSchema } from "@shared/schema";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -11,17 +11,37 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useLocation } from "wouter";
 
 export default function ContentManager() {
   const { toast } = useToast();
   const [selectedContent, setSelectedContent] = useState<HealthContent | null>(null);
+  const [user, setUser] = useState<{ username: string } | null | undefined>(undefined);
+  const [_, navigate] = useLocation();
 
-  // Fetch existing content
+  // Load user
+  useEffect(() => {
+    const currentUser = localStorage.getItem("user");
+    if (currentUser) {
+      setUser(JSON.parse(currentUser));
+    } else {
+      setUser(null);
+    }
+  }, []);
+
+  // Redirect if not admin
+  useEffect(() => {
+    if (user !== undefined && (!user || user.username !== "admin")) {
+      navigate("/admin/login");
+    }
+  }, [user, navigate]);
+
+  // Fetch content regardless of user role
   const { data: content, isLoading } = useQuery<HealthContent[]>({
     queryKey: ["/api/health-content"],
   });
 
-  // Form setup
+  // Setup form
   const form = useForm({
     resolver: zodResolver(insertHealthContentSchema),
     defaultValues: {
@@ -35,7 +55,6 @@ export default function ContentManager() {
     },
   });
 
-  // Create new content
   const createMutation = useMutation({
     mutationFn: async (data: HealthContent) => {
       return apiRequest("POST", "/api/health-content", data);
@@ -50,7 +69,6 @@ export default function ContentManager() {
     },
   });
 
-  // Update existing content
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: Partial<HealthContent> }) => {
       return apiRequest("PATCH", `/api/health-content/${id}`, data);
@@ -72,6 +90,9 @@ export default function ContentManager() {
     }
   };
 
+  // Handle loading and unauthorized access cleanly
+  if (user === undefined) return <p>Loading user...</p>;
+  if (!user || user.username !== "admin") return null;
   return (
     <div className="py-12 container px-4">
       <div className="max-w-4xl mx-auto">
@@ -250,3 +271,5 @@ export default function ContentManager() {
     </div>
   );
 }
+
+

@@ -3,13 +3,37 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertVolunteerSchema, insertDonationSchema, insertHealthContentSchema } from "@shared/schema";
 import Stripe from "stripe";
+import { Request, Response } from "express";
 
 // Initialize Stripe with API key (uses test key if not provided)
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_default", {
   apiVersion: "2025-02-24.acacia",
 });
 
+// Define types for login request and response
+interface LoginRequest {
+  username: string;
+  password: string;
+}
+
+interface LoginResponse {
+  success: boolean;
+  message?: string;
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
+
+  // POST /api/login - Handle login
+  app.post("/api/login", async (req: Request<{}, {}, LoginRequest>, res: Response<LoginResponse>) => {
+    const { username, password } = req.body;
+
+    // Simulate login check (replace this with real logic, e.g., checking a DB)
+    if (username === "admin" && password === "password123") {
+      return res.json({ success: true });
+    }
+
+    return res.status(401).json({ success: false, message: "Invalid credentials" });
+  });
   // GET /api/resources - Fetch all resources or filter by category
   app.get("/api/resources", async (req, res) => {
     const category = req.query.category as string;

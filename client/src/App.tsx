@@ -11,6 +11,7 @@ import Volunteer from "@/pages/volunteer";
 import Resources from "@/pages/resources";
 import Partners from "@/pages/partners";
 import ContentManager from "@/pages/admin/content-manager";
+import Login from "./pages/admin/login";
 
 function Router() {
   return (
@@ -23,6 +24,7 @@ function Router() {
           <Route path="/volunteer" component={Volunteer} />
           <Route path="/resources" component={Resources} />
           <Route path="/partners" component={Partners} />
+          <Route path="/admin/login" component={Login} />
           <Route path="/admin/content" component={ContentManager} />
           <Route component={NotFound} />
         </Switch>

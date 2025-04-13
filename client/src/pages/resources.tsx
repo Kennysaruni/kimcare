@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Resources() {
   const { data: resources, isLoading } = useQuery<Resource[]>({
-    queryKey: ["/api/resources"],
+    queryKey: ["/api/health-content"],
   });
 
   // Convert Set to Array to avoid iteration issues
@@ -53,7 +53,7 @@ export default function Resources() {
                         </CardHeader>
                         <CardContent>
                           <p className="text-muted-foreground mb-4">
-                            {resource.description}
+                            {resource.summary}
                           </p>
                           <div className="flex gap-2 flex-wrap">
                             {resource.tags?.map(tag => (
