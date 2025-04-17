@@ -58,6 +58,14 @@ export const healthContent = pgTable("health_content", {
   tags: text("tags").array().default([]).notNull(),
 });
 
+export const admins = pgTable("admins", {
+  id: serial("id").primaryKey(),
+  username: text("username").notNull().unique(),
+  passwordHash: text("password_hash").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+
 // Create Zod schemas for input validation
 export const insertVolunteerSchema = createInsertSchema(volunteers);
 export const insertDonationSchema = createInsertSchema(donations);
@@ -78,3 +86,7 @@ export type Donation = typeof donations.$inferSelect;
 export type Partner = typeof partners.$inferSelect;
 export type Resource = typeof resources.$inferSelect;
 export type HealthContent = typeof healthContent.$inferSelect;
+
+export const insertAdminSchema = createInsertSchema(admins);
+export type InsertAdmin = z.infer<typeof insertAdminSchema>;
+export type Admin = typeof admins.$inferSelect;

@@ -3,11 +3,14 @@ import {
   type Donation, type InsertDonation,
   type Partner, type InsertPartner,
   type Resource, type InsertResource,
-  type HealthContent, type InsertHealthContent
+  type HealthContent, type InsertHealthContent,
+  type Admin, type InsertAdmin
 } from "@shared/schema";
 
 // Interface defining all storage operations
 export interface IStorage {
+  getAdmins(): Promise<Admin[]>
+  createAdmin(admin: InsertAdmin): Promise<Admin[]>
   // Volunteer management operations
   getVolunteers(): Promise<Volunteer[]>;
   createVolunteer(volunteer: InsertVolunteer): Promise<Volunteer>;
@@ -41,6 +44,7 @@ export class MemStorage implements IStorage {
   private partners: Map<number, Partner>;
   private resources: Map<number, Resource>;
   private healthContent: Map<number, HealthContent>;
+  private admins: Map<number, Admin>;
 
   // Auto-incrementing IDs for each type
   private currentIds: { [key: string]: number };
@@ -52,6 +56,7 @@ export class MemStorage implements IStorage {
     this.partners = new Map();
     this.resources = new Map();
     this.healthContent = new Map();
+    this.admins = new Map();
 
     // Initialize ID counters
     this.currentIds = {
@@ -59,7 +64,8 @@ export class MemStorage implements IStorage {
       donations: 1,
       partners: 1,
       resources: 1,
-      healthContent: 1
+      healthContent: 1,
+      admins:1,
     };
 
     // Populate initial data
@@ -102,6 +108,17 @@ export class MemStorage implements IStorage {
     ];
 
     initialPartners.forEach(partner => this.createPartner(partner));
+  }
+
+  async getAdmins(): Promise<Admin[]> {
+    return Array.from(this.admins.values())
+  }
+
+  async createAdmin(admin: InsertAdmin): Promise<Admin[]> {
+    const id = this.currentIds.admins++;
+    const newAdmin: Admin = { ...admin,id, createdAt: new Date()}
+    this.admins.set(id, newAdmin)
+    return [newAdmin]
   }
 
   // Volunteer operations

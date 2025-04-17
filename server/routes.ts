@@ -4,6 +4,8 @@ import { storage } from "./storage";
 import { insertVolunteerSchema, insertDonationSchema, insertHealthContentSchema } from "@shared/schema";
 import Stripe from "stripe";
 import { Request, Response } from "express";
+import jwt from "jsonwebtoken"
+import bcrypt from "bcrypt"
 
 // Initialize Stripe with API key (uses test key if not provided)
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_default", {
@@ -19,21 +21,55 @@ interface LoginRequest {
 interface LoginResponse {
   success: boolean;
   message?: string;
+  token? :string
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
 
-  // POST /api/login - Handle login
-  app.post("/api/login", async (req: Request<{}, {}, LoginRequest>, res: Response<LoginResponse>) => {
-    const { username, password } = req.body;
-
-    // Simulate login check (replace this with real logic, e.g., checking a DB)
-    if (username === "admin" && password === "password123") {
-      return res.json({ success: true });
+  app.post("/api/admin/register", async(req: Request, res: Response) => {
+    const {username, password} = req.body
+    
+    if(!username || !password){
+      return res.status(400).json({success: false, message: "Username and password required"})
     }
 
-    return res.status(401).json({ success: false, message: "Invalid credentials" });
-  });
+    const passwordHash = await bcrypt.hash(password,10)
+
+    const [admin] = await storage.createAdmin({username, passwordHash})
+    return res.status(200).json({success: true, admin: {id: admin.id, username: admin.username}})
+  }) 
+
+  // POST /api/login - Handle login
+  // app.post("/api/login", async (req: Request<{}, {}, LoginRequest>, res: Response<LoginResponse>) => {
+  //   const { username, password } = req.body;
+
+  //   // Simulate login check (replace this with real logic, e.g., checking a DB)
+  //   if (username === "admin" && password === "password123") {
+  //     return res.json({ success: true });
+  //   }
+
+  //   return res.status(401).json({ success: false, message: "Invalid credentials" });
+  // });
+
+  app.post("/api/login", async(req: Request<{},{},LoginRequest>, res: Response<LoginResponse>) => {
+    const {username, password} = req.body
+    const admins = await storage.getAdmins()
+    const admin = admins.find((a) => (a.username === username ))
+
+    if(!admin){
+      return res.status(401).json({success: false, message: "Invalid credentials"})
+
+    }
+
+    const isMatch = await bcrypt.compare(password, admin.passwordHash)
+    if(!isMatch){
+      return res.status(401).json({success: false, message: "Invalid Credentials"})
+    }
+
+    const token = jwt.sign({id: admin.id, username: admin.username}, process.env.JWT_SECRET || "dev_secret")
+    return res.json({success: true, token})
+
+  })
   // GET /api/resources - Fetch all resources or filter by category
   app.get("/api/resources", async (req, res) => {
     const category = req.query.category as string;
@@ -44,6 +80,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(resources);
   });
 
+  app.get("/api/admins", async (req,res) => {
+    const admins = await storage.getAdmins()
+    res.json(admins)
+  })
   // GET /api/partners - Fetch all partner organizations
   app.get("/api/partners", async (_req, res) => {
     const partners = await storage.getPartners();
@@ -141,6 +181,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(404).json({ error: "Content not found" });
     }
   });
+  
 
   // Create and return HTTP server
   const httpServer = createServer(app);
