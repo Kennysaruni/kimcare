@@ -75,6 +75,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return res.json({success: true, token})
 
   })
+
+  app.get("/api/me", verifyToken, async (req, res) => {
+    const user = (req as any).user
+    return res.json(user)
+  })
   // GET /api/resources - Fetch all resources or filter by category
   app.get("/api/resources", async (req, res) => {
     const category = req.query.category as string;

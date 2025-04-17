@@ -30,6 +30,7 @@ export default function Login() {
       if (res.data?.token) {
         localStorage.setItem('token', res.data.token)
         localStorage.setItem('user', JSON.stringify({username}))
+        console.log("Navigating....")
         navigate('/admin/content');
       }
       else{

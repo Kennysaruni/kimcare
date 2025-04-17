@@ -13,25 +13,55 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 
+// Function to fetch user details with token
+async function fetchUser() {
+  const token = localStorage.getItem("token"); 
+
+  if (!token) {
+    throw new Error("No token found, please log in");
+  }
+
+  const response = await fetch("/api/me", {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`, 
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch user data");
+  }
+
+  const userData = await response.json();
+  return userData; 
+}
+
+
 export default function ContentManager() {
   const { toast } = useToast();
   const [selectedContent, setSelectedContent] = useState<HealthContent | null>(null);
   const [user, setUser] = useState<{ username: string } | null | undefined>(undefined);
   const [_, navigate] = useLocation();
 
+
   // Load user
   useEffect(() => {
-    const currentUser = localStorage.getItem("user");
-    if (currentUser) {
-      setUser(JSON.parse(currentUser));
-    } else {
-      setUser(null);
+    const fetchAndSetUser = async () =>{
+      try{
+        const currentUser = await fetchUser()
+        setUser(currentUser)
+      }catch(error){
+        setUser(null)
+        navigate("/admin/login")
+      }
     }
-  }, []);
+
+    fetchAndSetUser()
+  }, [navigate]);
 
   // Redirect if not admin
   useEffect(() => {
-    if (user !== undefined && (!user || user.username !== "admin")) {
+    if (user === null) {
       navigate("/admin/login");
     }
   }, [user, navigate]);
@@ -92,7 +122,7 @@ export default function ContentManager() {
 
   // Handle loading and unauthorized access cleanly
   if (user === undefined) return <p>Loading user...</p>;
-  if (!user || user.username !== "admin") return null;
+  if (!user) return null;
   return (
     <div className="py-12 container px-4">
       <div className="max-w-4xl mx-auto">
