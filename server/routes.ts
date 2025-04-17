@@ -24,6 +24,23 @@ interface LoginResponse {
   token? :string
 }
 
+const verifyToken = (req: Request, res: Response, next: () => void ) => {
+  const token = req.headers['authorization']?.split(' ')[1]
+
+  if(!token){
+    return res.status(403).json({success: false, message: "No token provided"})
+  }
+
+  jwt.verify(token,process.env.JWT_SECRET || "dev_secret", (err,decoded) => {
+    if (err) {
+      return res.status(403).json({success: false, message: "Invalid Token"})
+    }
+
+    (req as any ).user = decoded
+    next()
+  })
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/admin/register", async(req: Request, res: Response) => {
@@ -144,7 +161,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // POST /api/health-content - Create new content
-  app.post("/api/health-content", async (req, res) => {
+  app.post("/api/health-content", verifyToken, async (req, res) => {
     const parsedData = insertHealthContentSchema.safeParse(req.body);
     if (!parsedData.success) {
       return res.status(400).json({ error: "Invalid content data" });
@@ -154,7 +171,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // PATCH /api/health-content/:id - Update content
-  app.patch("/api/health-content/:id", async (req, res) => {
+  app.patch("/api/health-content/:id",verifyToken, async (req, res) => {
     const parsedData = insertHealthContentSchema.partial().safeParse(req.body);
     if (!parsedData.success) {
       return res.status(400).json({ error: "Invalid content data" });

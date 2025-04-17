@@ -5,6 +5,7 @@ import { useLocation } from 'wouter';
 // Type for the API response (based on the expected shape)
 interface LoginResponse {
   success: boolean;
+  token: string;
 }
 
 export default function Login() {
@@ -26,9 +27,13 @@ export default function Login() {
         { withCredentials: true }
       );
       
-      if (res.data.success) {
+      if (res.data?.token) {
+        localStorage.setItem('token', res.data.token)
         localStorage.setItem('user', JSON.stringify({username}))
         navigate('/admin/content');
+      }
+      else{
+        setError("Login failed, Please try again")
       }
     } catch (err) {
       setError('Invalid credentials');
