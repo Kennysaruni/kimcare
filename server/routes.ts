@@ -39,18 +39,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return res.status(200).json({success: true, admin: {id: admin.id, username: admin.username}})
   }) 
 
-  // POST /api/login - Handle login
-  // app.post("/api/login", async (req: Request<{}, {}, LoginRequest>, res: Response<LoginResponse>) => {
-  //   const { username, password } = req.body;
-
-  //   // Simulate login check (replace this with real logic, e.g., checking a DB)
-  //   if (username === "admin" && password === "password123") {
-  //     return res.json({ success: true });
-  //   }
-
-  //   return res.status(401).json({ success: false, message: "Invalid credentials" });
-  // });
-
   app.post("/api/login", async(req: Request<{},{},LoginRequest>, res: Response<LoginResponse>) => {
     const {username, password} = req.body
     const admins = await storage.getAdmins()
